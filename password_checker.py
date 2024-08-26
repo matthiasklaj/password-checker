@@ -16,7 +16,13 @@ def check_password_strength(password):
     strength_score = sum(criteria.values())
     
     # Calculate a complexity score
-    complexity_score = (len(password) * 0.2) + (sum(criteria.values()) * 10)
+    length_score = min(len(password), 20) * 0.5  # Score for length, with max 10 points
+    criteria_score = strength_score * 10  # Each met criteria contributes 10 points
+    complexity_score = length_score + criteria_score
+    
+    # Define the target complexity score
+    target_score = 100
+    score_needed = max(0, target_score - complexity_score)
     
     # Determine password strength
     if strength_score == 5:
@@ -30,10 +36,22 @@ def check_password_strength(password):
     else:
         strength = 'Very Weak'
     
-    # Calculate the missing criteria
+    # Calculate missing criteria and suggestions
     missing_criteria = {key: not value for key, value in criteria.items() if not value}
-    score_needed = 100 - complexity_score
-    return criteria, strength, complexity_score, missing_criteria, score_needed
+    suggestions = []
+    
+    if 'length' in missing_criteria:
+        suggestions.append("- Increase password length to at least 12 characters.")
+    if 'upper' in missing_criteria:
+        suggestions.append("- Add at least one uppercase letter.")
+    if 'lower' in missing_criteria:
+        suggestions.append("- Add at least one lowercase letter.")
+    if 'digit' in missing_criteria:
+        suggestions.append("- Add at least one digit.")
+    if 'special' in missing_criteria:
+        suggestions.append("- Add at least one special character.")
+    
+    return criteria, strength, complexity_score, suggestions, score_needed
 
 def main():
     if len(sys.argv) > 1:
@@ -41,7 +59,7 @@ def main():
     else:
         password = input("Enter a password to check its strength: ")
     
-    criteria, strength, complexity_score, missing_criteria, score_needed = check_password_strength(password)
+    criteria, strength, complexity_score, suggestions, score_needed = check_password_strength(password)
 
     print("\nPassword Strength Criteria:")
     print(f"Length (>= 12 characters): {'Pass' if criteria['length'] else 'Fail'}")
@@ -55,17 +73,11 @@ def main():
     
     if score_needed > 0:
         print("\nSuggestions to reach a perfect score (100):")
-        if 'length' in missing_criteria:
-            print("- Increase password length to at least 12 characters.")
-        if 'upper' in missing_criteria:
-            print("- Add at least one uppercase letter.")
-        if 'lower' in missing_criteria:
-            print("- Add at least one lowercase letter.")
-        if 'digit' in missing_criteria:
-            print("- Add at least one digit.")
-        if 'special' in missing_criteria:
-            print("- Add at least one special character.")
+        for suggestion in suggestions:
+            print(suggestion)
         print(f"\nAdditional score needed to reach 100: {score_needed:.2f}")
+    else:
+        print("\nYour password is already at maximum complexity score!")
 
 if __name__ == "__main__":
     main()
